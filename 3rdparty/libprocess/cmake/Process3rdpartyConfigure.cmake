@@ -39,6 +39,8 @@ elseif (WIN32)
   # NOTE: We expect cURL exists on Unix (usually pulled in with a package
   # manager), but Windows has no package manager, so we have to go get it.
   EXTERNAL("curl" ${CURL_VERSION} "${PROCESS_3RD_BIN}")
+  
+  EXTERNAL("zlib" ${ZLIB_VERSION} "${PROCESS_3RD_BIN}")
 endif (NOT WIN32)
 
 # Intermediate convenience variables for oddly-structured directories.
