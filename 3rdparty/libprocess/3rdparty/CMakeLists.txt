@@ -124,23 +124,6 @@ endif (NOT WIN32)
 
 set(RY_UPDATE_CMD ${CMAKE_COMMAND} -E copy ${PROCESS_3RD_SRC}/http-parser/CMakeLists.txt ${HTTP_PARSER_ROOT})
 
-if (WIN32)
-  set(ZLIB_PATCH_CMD   
-    powershell -command "(Get-Item -Path '.\\' -Verbose).FullName" 
-	&& powershell -command "$f='contrib\\vstudio\\vc11\\zlibvc.vcxproj'$<SEMICOLON> $c = get-Content $f$<SEMICOLON> $c -replace 'MACHINE:I386','MACHINE:I386 /SAFESEH:NO' | Out-File -Encoding 'UTF8' $f"
-	&& powershell -command "$f='contrib\\vstudio\\vc11\\zlibvc.def'$<SEMICOLON> $c = get-Content $f$<SEMICOLON> $c -replace '1.2.8','1.2' | Out-File -Encoding 'UTF8' $f"
-	
-  )
-  set(ZLIB_CONFIG_CMD  ${CMAKE_NOOP})
-  set(ZLIB_INSTALL_CMD ${CMAKE_NOOP})
-  VS_BUILD_CMD(
-      ZLIB
-      ${ZLIB_ROOT}/contrib/vstudio/vc11/zlibvc.sln
-      ${CMAKE_BUILD_TYPE}
-      "zlibvc")
-
-endif (WIN32)
-
 # Third-party libraries. Tell the build system how to pull in and build third-
 # party libraries at compile time, using the ExternalProject_Add macro.
 ##############################################################################
@@ -228,10 +211,7 @@ if (WIN32)
 ExternalProject_Add(
   ${ZLIB_TARGET}
   PREFIX            ${ZLIB_CMAKE_ROOT}
-  PATCH_COMMAND     ${ZLIB_PATCH_CMD}
-  CONFIGURE_COMMAND ${ZLIB_CONFIG_CMD}
-  BUILD_COMMAND     ${ZLIB_BUILD_CMD}
-  INSTALL_COMMAND   ${ZLIB_INSTALL_CMD}
+  INSTALL_COMMAND   ${CMAKE_NOOP}
   URL               ${ZLIB_URL}
   DOWNLOAD_NAME     zlib-${ZLIB_VERSION}.tar.gz
   )
