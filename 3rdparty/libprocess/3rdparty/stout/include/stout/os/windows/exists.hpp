@@ -19,6 +19,8 @@
 #include <stout/os/realpath.hpp>
 #include <stout/windows.hpp>
 
+#include <stout/os/realpath.hpp>
+
 
 namespace os {
 

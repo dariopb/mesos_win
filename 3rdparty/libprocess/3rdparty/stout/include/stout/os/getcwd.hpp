@@ -11,30 +11,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __STOUT_OS_WINDOWS_CHSIZE_HPP__
-#define __STOUT_OS_WINDOWS_CHSIZE_HPP__
-
-#include <io.h>
+#ifndef __STOUT_OS_GETCWD_HPP__
+#define __STOUT_OS_GETCWD_HPP__
 
 #include <stout/try.hpp>
+
+#ifdef __WINDOWS__
+#include <stout/windows.hpp> // To be certain we're using the right `getcwd`.
+#endif // __WINDOWS__
 
 
 namespace os {
 
-// Identical in functionality to POSIX standard `ftruncate`, except that on
-// Windows the file descriptor that we pass as an argument must belong to an
-// open file.
-inline Try<Nothing> chsize(int fd, off_t length)
+inline std::string getcwd()
 {
-  if (::_chsize(fd, length) != 0) {
-    return ErrnoError(
-      "Failed to truncate file at file descriptor '" + std::to_string(fd) +
-      "' to " + std::to_string(length) + " bytes.");
+  size_t size = 100;
+
+  while (true) {
+    char* temp = new char[size];
+    if (::getcwd(temp, size) == temp) {
+      std::string result(temp);
+      delete[] temp;
+      return result;
+    } else {
+      if (errno != ERANGE) {
+        delete[] temp;
+        return std::string();
+      }
+      size *= 2;
+      delete[] temp;
+    }
   }
 
-  return Nothing();
+  return std::string();
 }
 
 } // namespace os {
 
-#endif // __STOUT_OS_WINDOWS_CHSIZE_HPP__
+
+#endif // __STOUT_OS_GETCWD_HPP__

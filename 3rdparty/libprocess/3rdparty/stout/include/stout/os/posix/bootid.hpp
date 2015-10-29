@@ -14,7 +14,15 @@
 #ifndef __STOUT_OS_POSIX_BOOTID_HPP__
 #define __STOUT_OS_POSIX_BOOTID_HPP__
 
-#include <stout/os.hpp>
+#include <string>
+
+#include <sys/time.h>
+
+#include <stout/error.hpp>
+#include <stout/stringify.hpp>
+#include <stout/strings.hpp>
+#include <stout/try.hpp>
+
 #include <stout/os/read.hpp>
 #ifdef __APPLE__
 #include <stout/os/sysctl.hpp>
@@ -37,11 +45,11 @@ inline Try<std::string> bootId()
   // milliseconds here instead of seconds because the relatively high
   // imprecision of millisecond resolution would cause `bootId` to return a
   // different number nearly every time it was called.
-  Try<timeval> bootTime = os::sysctl(CTL_KERN, KERN_BOOTTIME).time();
-  if (bootTime.isError()) {
-    return Error(bootTime.error());
+  Try<timeval> boot_time = os::sysctl(CTL_KERN, KERN_BOOTTIME).time();
+  if (boot_time.isError()) {
+    return Error(boot_time.error());
   }
-  return stringify(bootTime.get().tv_sec);
+  return stringify(boot_time.get().tv_sec);
 #else
   return Error("Not implemented");
 #endif

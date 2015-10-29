@@ -15,7 +15,9 @@
 #define __STOUT_OS_WINDOWS_BOOTID_HPP__
 
 #include <chrono>
+#include <string>
 
+#include <stout/stringify.hpp>
 #include <stout/try.hpp>
 
 
@@ -29,16 +31,17 @@ inline Try<std::string> bootId()
   // that we can't use milliseconds here instead of seconds because the
   // relatively high imprecision of millisecond resolution would cause `bootId`
   // to return a different number nearly every time it was called.
-  using namespace std::chrono;
 
-  milliseconds uptime = milliseconds(GetTickCount64());
-  system_clock::time_point now = system_clock::now();
-  system_clock::time_point bootTime = now - uptime;
+  std::chrono::milliseconds uptime =
+    std::chrono::milliseconds(GetTickCount64());
 
-  long long bootTimeSecs =
-    duration_cast<seconds>(bootTime.time_since_epoch()).count();
+  std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+  std::chrono::system_clock::time_point boot_time = now - uptime;
 
-  return stringify(bootTimeSecs);
+  long long boot_time_secs = std::chrono::duration_cast<std::chrono::seconds>(
+      boot_time.time_since_epoch()).count();
+
+  return stringify(boot_time_secs);
 }
 
 } // namespace os {

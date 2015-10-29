@@ -34,8 +34,8 @@
 #include <stout/try.hpp>
 
 #include <stout/os/bootid.hpp>
-#include <stout/os/chsize.hpp>
 #include <stout/os/exists.hpp>
+#include <stout/os/ftruncate.hpp>
 #include <stout/os/read.hpp>
 #include <stout/os/realpath.hpp>
 
@@ -645,12 +645,13 @@ Try<TaskState> TaskState::recover(
   // NOTE: This is safe even though we ignore partial protobuf read
   // errors above, because the 'fd' is properly set to the end of the
   // last valid update by 'protobuf::read()'.
-  Try<Nothing> truncated = os::chsize(fd.get(), offset);
+  Try<Nothing> truncated = os::ftruncate(fd.get(), offset);
 
-  if (!truncated.isSome()) {
+  if (truncated.isError()) {
     os::close(fd.get());
-    return ErrnoError(
-        "Failed to truncate status updates file '" + path + "'");
+    return Error(
+        "Failed to truncate status updates file '" + path +
+        "': " + truncated.error());
   }
 
   // After reading a non-corrupted updates file, 'record' should be
@@ -725,11 +726,13 @@ Try<ResourcesState> ResourcesState::recover(
   // NOTE: This is safe even though we ignore partial protobuf read
   // errors above, because the 'fd' is properly set to the end of the
   // last valid resource by 'protobuf::read()'.
-  Try<Nothing> truncated = os::chsize(fd.get(), offset);
+  Try<Nothing> truncated = os::ftruncate(fd.get(), offset);
 
-  if (!truncated.isSome()) {
+  if (truncated.isError()) {
     os::close(fd.get());
-    return ErrnoError("Failed to truncate resources file '" + path + "'");
+    return Error(
+      "Failed to truncate resources file '" + path +
+      "': " + truncated.error());
   }
 
   // After reading a non-corrupted resources file, 'record' should be

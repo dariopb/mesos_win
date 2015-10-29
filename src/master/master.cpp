@@ -143,10 +143,6 @@ public:
       pinged(false),
       connected(true)
   {
-    // TODO(Wang Yong Qiao): For backwards compatibility, this handler is kept.
-    // Suggest to remove this handler in 0.26.0.
-    install("PONG", &SlaveObserver::pongOld);
-
     install<PongSlaveMessage>(&SlaveObserver::pong);
   }
 
@@ -174,11 +170,6 @@ protected:
 
     pinged = true;
     delay(slavePingTimeout, self(), &SlaveObserver::timeout);
-  }
-
-  void pongOld(const UPID& from, const string& body)
-  {
-    pong();
   }
 
   void pong()
@@ -757,29 +748,35 @@ void Master::initialize()
   Http http = Http(this);
 
   route("/api/v1/scheduler",
-        Http::SCHEDULER_HELP,
+        Http::SCHEDULER_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.scheduler(request);
         });
+  route("/flags",
+        Http::FLAGS_HELP(),
+        [http](const process::http::Request& request) {
+          Http::log(request);
+          return http.flags(request);
+        });
   route("/health",
-        Http::HEALTH_HELP,
+        Http::HEALTH_HELP(),
         [http](const process::http::Request& request) {
           return http.health(request);
         });
   route("/observe",
-        Http::OBSERVE_HELP,
+        Http::OBSERVE_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.observe(request);
         });
   route("/redirect",
-        Http::REDIRECT_HELP,
+        Http::REDIRECT_HELP(),
         [http](const process::http::Request& request) {
           return http.redirect(request);
         });
   route("/reserve",
-        Http::RESERVE_HELP,
+        Http::RESERVE_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.reserve(request);
@@ -787,25 +784,25 @@ void Master::initialize()
   // TODO(ijimenez): Remove this endpoint at the end of the
   // deprecation cycle on 0.26.
   route("/roles.json",
-        Http::ROLES_HELP,
+        Http::ROLES_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.roles(request);
         });
   route("/roles",
-        Http::ROLES_HELP,
+        Http::ROLES_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.roles(request);
         });
   route("/teardown",
-        Http::TEARDOWN_HELP,
+        Http::TEARDOWN_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.teardown(request);
         });
   route("/slaves",
-        Http::SLAVES_HELP,
+        Http::SLAVES_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.slaves(request);
@@ -813,19 +810,19 @@ void Master::initialize()
   // TODO(ijimenez): Remove this endpoint at the end of the
   // deprecation cycle on 0.26.
   route("/state.json",
-        Http::STATE_HELP,
+        Http::STATE_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.state(request);
         });
   route("/state",
-        Http::STATE_HELP,
+        Http::STATE_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.state(request);
         });
   route("/state-summary",
-        Http::STATESUMMARY_HELP,
+        Http::STATESUMMARY_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.stateSummary(request);
@@ -833,43 +830,43 @@ void Master::initialize()
   // TODO(ijimenez): Remove this endpoint at the end of the
   // deprecation cycle.
   route("/tasks.json",
-        Http::TASKS_HELP,
+        Http::TASKS_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.tasks(request);
         });
   route("/tasks",
-        Http::TASKS_HELP,
+        Http::TASKS_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.tasks(request);
         });
   route("/maintenance/schedule",
-        Http::MAINTENANCE_SCHEDULE_HELP,
+        Http::MAINTENANCE_SCHEDULE_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.maintenanceSchedule(request);
         });
   route("/maintenance/status",
-        Http::MAINTENANCE_STATUS_HELP,
+        Http::MAINTENANCE_STATUS_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.maintenanceStatus(request);
         });
   route("/machine/down",
-        Http::MACHINE_DOWN_HELP,
+        Http::MACHINE_DOWN_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.machineDown(request);
         });
   route("/machine/up",
-        Http::MACHINE_UP_HELP,
+        Http::MACHINE_UP_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.machineUp(request);
         });
   route("/unreserve",
-        Http::UNRESERVE_HELP,
+        Http::UNRESERVE_HELP(),
         [http](const process::http::Request& request) {
           Http::log(request);
           return http.unreserve(request);
@@ -6019,12 +6016,11 @@ void Master::updateTask(Task* task, const StatusUpdate& update)
   // Get the unacknowledged status.
   const TaskStatus& status = update.status();
 
-  // Out-of-order updates should not occur, however in case they
-  // do (e.g., due to bugs), prevent them here to ensure that the
-  // resource accounting is not affected.
-  if (protobuf::isTerminalState(task->state()) &&
-      !protobuf::isTerminalState(status.state())) {
-    LOG(ERROR) << "Ignoring out of order status update for task "
+  // Once a task's state has been transitioned to terminal state, no further
+  // terminal updates should result in a state change. These are the same
+  // semantics that are enforced by the slave.
+  if (protobuf::isTerminalState(task->state())) {
+    LOG(ERROR) << "Ignoring status update for the terminated task "
                << task->task_id()
                << " (" << task->state() << " -> " << status.state() << ")"
                << " of framework " << task->framework_id();

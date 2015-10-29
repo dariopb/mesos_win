@@ -235,8 +235,24 @@ PYTHON_PROTOS =								\
   python/interface/src/mesos/interface/mesos_pb2.py			\
   python/interface/src/mesos/interface/containerizer_pb2.py
 
-BUILT_SOURCES += $(CXX_PROTOS) $(JAVA_PROTOS) $(V1_JAVA_PROTOS) $(PYTHON_PROTOS)
-CLEANFILES += $(CXX_PROTOS) $(JAVA_PROTOS) $(V1_JAVA_PROTOS) $(PYTHON_PROTOS)
+V1_PYTHON_PROTOS =							\
+  python/interface/src/mesos/v1/interface/mesos_pb2.py			\
+  python/interface/src/mesos/v1/interface/scheduler_pb2.py
+
+
+BUILT_SOURCES += 							\
+  $(CXX_PROTOS) 							\
+  $(JAVA_PROTOS) 							\
+  $(V1_JAVA_PROTOS) 							\
+  $(PYTHON_PROTOS) 							\
+  $(V1_PYTHON_PROTOS)
+
+CLEANFILES += 								\
+  $(CXX_PROTOS) 							\
+  $(JAVA_PROTOS) 							\
+  $(V1_JAVA_PROTOS) 							\
+  $(PYTHON_PROTOS) 							\
+  $(V1_PYTHON_PROTOS)
 
 FLAGS_PROTOS = messages/flags.pb.cc messages/flags.pb.h
 
@@ -411,35 +427,35 @@ python/interface/src/mesos/interface/containerizer_pb2.py:		\
 	$(PROTOC) -I$(top_srcdir)/include/mesos/containerizer		\
 		$(PROTOCFLAGS)						\
 		--python_out=python/interface/src/mesos/interface $^
-	sed -e 's/mesos\.mesos_pb2/mesos_pb2/' <$@ >$@
+	$(SED) -i.bak 's/mesos\.mesos_pb2/mesos_pb2/' $@ && rm $@.bak
 
 python/interface/src/mesos/interface/scheduler_pb2.py: $(SCHEDULER_PROTO)
 	$(MKDIR_P) $(@D)
 	$(PROTOC) -I$(top_srcdir)/include/mesos/scheduler		\
           $(PROTOCFLAGS)						\
           --python_out=python/interface/src/mesos/interface $^
-	sed -e 's/mesos\.mesos_pb2/mesos_pb2/' <$@ >$@
+	$(SED) -i.bak 's/mesos\.mesos_pb2/mesos_pb2/' $@ && rm $@.bak
 
 python/interface/src/mesos/v1/interface/scheduler_pb2.py: $(V1_SCHEDULER_PROTO)
 	$(MKDIR_P) $(@D)
 	$(PROTOC) -I$(top_srcdir)/include/mesos/v1/scheduler		\
           $(PROTOCFLAGS)						\
           --python_out=python/interface/src/mesos/v1/interface $^
-	sed -e 's/mesos\.mesos_pb2/mesos_pb2/' <$@ >$@
+	$(SED) -i.bak 's/mesos\.mesos_pb2/mesos_pb2/' $@ && rm $@.bak
 
 python/interface/src/mesos/interface/executor_pb2.py: $(EXECUTOR_PROTO)
 	$(MKDIR_P) $(@D)
 	$(PROTOC) -I$(top_srcdir)/include/mesos/executor		\
           $(PROTOCFLAGS)						\
           --python_out=python/interface/src/mesos/interface $^
-	sed -e 's/mesos\.mesos_pb2/mesos_pb2/' <$@ >$@
+	$(SED) -i.bak 's/mesos\.mesos_pb2/mesos_pb2/' $@ && rm $@.bak
 
 python/interface/src/mesos/v1/interface/executor_pb2.py: $(V1_EXECUTOR_PROTO)
 	$(MKDIR_P) $(@D)
 	$(PROTOC) -I$(top_srcdir)/include/mesos/v1/executor		\
           $(PROTOCFLAGS)						\
           --python_out=python/interface/src/mesos/v1/interface $^
-	sed -e 's/mesos\.mesos_pb2/mesos_pb2/' <$@ >$@
+	$(SED) -i.bak 's/mesos\.mesos_pb2/mesos_pb2/' $@ && rm $@.bak
 
 # We even use a convenience library for most of Mesos so that we can
 # exclude third party libraries so setuptools/distribute can build a
@@ -495,6 +511,7 @@ libmesos_no_3rdparty_la_SOURCES =					\
 	master/repairer.cpp						\
 	master/validation.cpp						\
 	master/allocator/allocator.cpp					\
+	master/allocator/mesos/hierarchical.cpp				\
 	master/allocator/sorter/drf/sorter.cpp				\
 	messages/flags.proto						\
 	messages/messages.cpp						\
@@ -543,6 +560,7 @@ libmesos_no_3rdparty_la_SOURCES =					\
 	slave/containerizer/provisioner/docker/paths.cpp		\
 	slave/containerizer/provisioner/docker/puller.cpp		\
 	slave/containerizer/provisioner/docker/registry_client.cpp	\
+	slave/containerizer/provisioner/docker/spec.cpp			\
 	slave/containerizer/provisioner/docker/store.cpp		\
 	slave/containerizer/provisioner/docker/token_manager.cpp	\
 	slave/resource_estimators/noop.cpp				\
@@ -849,6 +867,7 @@ libmesos_no_3rdparty_la_SOURCES +=					\
 	slave/containerizer/provisioner/docker/paths.hpp		\
 	slave/containerizer/provisioner/docker/puller.hpp		\
 	slave/containerizer/provisioner/docker/registry_client.hpp	\
+	slave/containerizer/provisioner/docker/spec.hpp			\
 	slave/containerizer/provisioner/docker/store.hpp		\
 	slave/containerizer/provisioner/docker/token_manager.hpp	\
 	slave/containerizer/isolators/posix.hpp				\
@@ -925,9 +944,9 @@ if GIT_REPO
 endif
 
 # We need to escape the build flags properly.
-BUILD_FLAGS = $(echo $(MESOS_CPPFLAGS) $(CPPFLAGS) | sed 's/\"/\\\"/g')	\
-              $(echo $(AM_CFLAGS) $(CFLAGS) | sed 's/\"/\\\"/g')	\
-              $(echo $(AM_CXXFLAGS) $(CXXFLAGS) | sed 's/\"/\\\"/g')
+BUILD_FLAGS = $(echo $(MESOS_CPPFLAGS) $(CPPFLAGS) | $(SED) 's/\"/\\\"/g')	\
+              $(echo $(AM_CFLAGS) $(CFLAGS) | $(SED) 's/\"/\\\"/g')		\
+              $(echo $(AM_CXXFLAGS) $(CXXFLAGS) | $(SED) 's/\"/\\\"/g')
 
 # TODO(benh): Provide other build flags.
 
@@ -1149,7 +1168,7 @@ dist_bin_SCRIPTS +=							\
   cli/mesos-tail
 
 # Need to distribute/install webui javascript. We use 'pkgdatadir'
-# instead of 'datadir' as the install directory so we get the the
+# instead of 'datadir' as the install directory so we get the
 # package name (i.e., 'mesos') as part of the path (i.e.,
 # /path/to/mesos/webui versus something like /path/to/webui). Note
 # that 'datadir' (e.g., /usr/local/share) is for read-only "data" and
@@ -1410,6 +1429,8 @@ PYTHON_SOURCE =								\
 	python/cli/src/mesos/http.py					\
 	python/interface/src/mesos/__init__.py				\
 	python/interface/src/mesos/interface/__init__.py		\
+	python/interface/src/mesos/v1/__init__.py			\
+	python/interface/src/mesos/v1/interface/__init__.py		\
 	python/native/src/mesos/__init__.py				\
 	python/native/src/mesos/native/__init__.py			\
 	python/native/src/mesos/native/mesos_executor_driver_impl.cpp	\
@@ -1483,6 +1504,7 @@ MESOS_WHLS =										\
 # and converts it into the correct directory path.
 $(MESOS_EGGS) $(MESOS_WHLS):								\
 		$(PYTHON_PROTOS)							\
+		$(V1_PYTHON_PROTOS)							\
 		$(PYTHON_SOURCE)							\
 		libmesos_no_3rdparty.la							\
 		$(PROTOBUF_EGG)
@@ -1724,7 +1746,6 @@ mesos_tests_SOURCES =						\
   tests/gc_tests.cpp						\
   tests/hierarchical_allocator_tests.cpp			\
   tests/hook_tests.cpp						\
-  tests/http_api_tests.cpp					\
   tests/log_tests.cpp						\
   tests/logging_tests.cpp					\
   tests/main.cpp						\
@@ -1756,6 +1777,7 @@ mesos_tests_SOURCES =						\
   tests/scheduler_tests.cpp					\
   tests/scheduler_driver_tests.cpp				\
   tests/scheduler_event_call_tests.cpp				\
+  tests/scheduler_http_api_tests.cpp				\
   tests/script.cpp						\
   tests/slave_recovery_tests.cpp				\
   tests/slave_tests.cpp						\
@@ -1863,9 +1885,11 @@ dist_check_SCRIPTS +=							\
 # runner that ships with newer versions of autotools.
 # See the following discussion for the workaround:
 # http://lists.gnu.org/archive/html/automake/2013-01/msg00051.html
-check-local: mesos-tests
+check-local: tests
 	./mesos-tests
 
 clean-local: clean-java clean-python
+
+tests: all $(check_PROGRAMS) mesos-tests
 
 .PHONY: $(PHONY_TARGETS)

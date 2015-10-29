@@ -17,9 +17,10 @@
 
 #include <stout/error.hpp>
 #include <stout/nothing.hpp>
+#include <stout/try.hpp>
+
 #include <stout/os/close.hpp>
 #include <stout/os/open.hpp>
-#include <stout/try.hpp>
 
 #ifdef __WINDOWS__
 #include <stout/windows.hpp>

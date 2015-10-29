@@ -36,10 +36,13 @@ PROTOC_TO_INCLUDE_DIR(V1_SCHEDULER     mesos/v1/scheduler/scheduler)
 PROTOC_TO_INCLUDE_DIR(ISOLATOR         mesos/slave/isolator)
 PROTOC_TO_INCLUDE_DIR(OVERSUBSCRIPTION mesos/slave/oversubscription)
 
+PROTOC_TO_SRC_DIR(REGISTRY master/registry)
+
 PROTOC_TO_SRC_DIR(MESSAGES messages/messages)
 PROTOC_TO_SRC_DIR(FLAGS    messages/flags)
 PROTOC_TO_SRC_DIR(STATE    messages/state)
-PROTOC_TO_SRC_DIR(REGISTRY master/registry)
+
+PROTOC_TO_SRC_DIR(MESSAGE slave/containerizer/provisioner/docker/message)
 
 set(MESOS_PROTOBUF_SRC
   ${MESOS_PROTO_CC}
@@ -62,6 +65,7 @@ set(MESOS_PROTOBUF_SRC
   ${STATE_PROTO_CC}
   ${ISOLATOR_PROTO_CC}
   ${REGISTRY_PROTO_CC}
+  ${MESSAGE_PROTO_CC}
   )
 
 # Configure Mesos files.
@@ -142,6 +146,7 @@ set(MASTER_SRC
   master/repairer.cpp
   master/validation.cpp
   master/allocator/allocator.cpp
+  master/allocator/mesos/hierarchical.cpp
   master/allocator/sorter/drf/sorter.cpp
   )
 
@@ -199,7 +204,9 @@ if (NOT WIN32)
     slave/containerizer/provisioner/appc/store.cpp
     slave/containerizer/provisioner/backend.cpp
     slave/containerizer/provisioner/backends/copy.cpp
+    slave/containerizer/provisioner/docker/message.proto
     slave/containerizer/provisioner/docker/registry_client.cpp
+    slave/containerizer/provisioner/docker/spec.cpp
     slave/containerizer/provisioner/docker/token_manager.cpp
     slave/resource_estimators/noop.cpp
     )
@@ -214,6 +221,10 @@ set(V1_SRC
   v1/mesos.cpp
   v1/resources.cpp
   v1/values.cpp
+  )
+
+set(VERSION_SRC
+  version/version.cpp
   )
 
 set(WATCHER_SRC
@@ -232,6 +243,7 @@ set(MESOS_SRC
   ${MESOS_PROTOBUF_SRC}
   ${MESOS_SRC}
   ${AGENT_SRC}
+  ${MESOS_PROTOBUF_SRC}
   )
 
 if (NOT WIN32)
@@ -253,9 +265,9 @@ if (NOT WIN32)
     ${SCHEDULER_SRC}
     ${USAGE_SRC}
     ${V1_SRC}
+    ${VERSION_SRC}
     ${WATCHER_SRC}
     ${ZOOKEEPER_SRC}
-    ${MESOS_PROTOBUF_SRC}
     )
 endif (NOT WIN32)
 

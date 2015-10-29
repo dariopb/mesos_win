@@ -17,6 +17,10 @@
 
 #include <stout/result.hpp>
 
+#ifdef __WINDOWS__
+#include <stout/windows.hpp>
+#endif
+
 
 namespace os {
 

@@ -47,16 +47,17 @@
 #endif // __ APPLE__
 #endif // O_CLOEXEC
 
-// Finally, include `fcntl` only if we need it. In particular, this will cause
-// us to not include `fcntl` on Windows (where these functions don't exist),
-// and therefore simplifies the code below.
+// Only include `fcntl` when strictly necessary, i.e., when we need to use
+// `os::cloexec` to set the close-on-exec behavior of a file descriptor. We do
+// this because some platforms (like Windows) will probably never support
+// `os::cloexec`, and hence referencing that header will cause problems on some
+// systems.
 #ifdef O_CLOEXEC_UNDEFINED
 #include <stout/os/fcntl.hpp>
 #endif // O_CLOEXEC_UNDEFINED
 
 
 namespace os {
-
 
 inline Try<int> open(const std::string& path, int oflag, mode_t mode = 0)
 {

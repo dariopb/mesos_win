@@ -134,6 +134,4 @@ inline Try<std::string> read(const std::string& path)
 
 } // namespace os {
 
-
-
 #endif // __STOUT_OS_READ_HPP__

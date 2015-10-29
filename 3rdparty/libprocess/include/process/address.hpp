@@ -18,7 +18,9 @@
 #include <stdint.h>
 #ifndef __WINDOWS__
 #include <unistd.h>
+#endif // __WINDOWS__
 
+#ifndef __WINDOWS__
 #include <arpa/inet.h>
 #endif // __WINDOWS__
 

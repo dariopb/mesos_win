@@ -39,12 +39,14 @@
 #include <stout/json.hpp>
 #include <stout/none.hpp>
 #include <stout/nothing.hpp>
-#include <stout/os/open.hpp>
-#include <stout/os/read.hpp>
-#include <stout/os/write.hpp>
 #include <stout/result.hpp>
 #include <stout/stringify.hpp>
 #include <stout/try.hpp>
+
+#include <stout/os/close.hpp>
+#include <stout/os/open.hpp>
+#include <stout/os/read.hpp>
+#include <stout/os/write.hpp>
 
 namespace protobuf {
 

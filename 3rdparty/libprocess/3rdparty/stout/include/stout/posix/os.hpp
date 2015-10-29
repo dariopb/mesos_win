@@ -14,9 +14,6 @@
 #ifndef __STOUT_POSIX_OS_HPP__
 #define __STOUT_POSIX_OS_HPP__
 
-#ifdef __APPLE__
-#include <crt_externs.h> // For _NSGetEnviron().
-#endif
 #include <errno.h>
 #ifdef __sun
 #include <sys/loadavg.h>
@@ -85,46 +82,12 @@
 #include <stout/os/sysctl.hpp>
 #endif // __APPLE__
 
-// Need to declare 'environ' pointer for non OS X platforms.
-#ifndef __APPLE__
-extern char** environ;
-#endif
+#include <stout/os/raw/environment.hpp>
 
 namespace os {
 
 // Forward declarations.
 inline Try<Nothing> utime(const std::string&);
-
-inline char** environ()
-{
-  // Accessing the list of environment variables is platform-specific.
-  // On OS X, the 'environ' symbol isn't visible to shared libraries,
-  // so we must use the _NSGetEnviron() function (see 'man environ' on
-  // OS X). On other platforms, it's fine to access 'environ' from
-  // shared libraries.
-#ifdef __APPLE__
-  return *_NSGetEnviron();
-#else
-  return ::environ;
-#endif
-}
-
-
-// Returns the address of os::environ().
-inline char*** environp()
-{
-  // Accessing the list of environment variables is platform-specific.
-  // On OS X, the 'environ' symbol isn't visible to shared libraries,
-  // so we must use the _NSGetEnviron() function (see 'man environ' on
-  // OS X). On other platforms, it's fine to access 'environ' from
-  // shared libraries.
-#ifdef __APPLE__
-  return _NSGetEnviron();
-#else
-  return &::environ;
-#endif
-}
-
 
 // Sets the value associated with the specified key in the set of
 // environment variables.
@@ -142,105 +105,6 @@ inline void unsetenv(const std::string& key)
 {
   ::unsetenv(key.c_str());
 }
-
-
-inline Try<Nothing> touch(const std::string& path)
-{
-  if (!exists(path)) {
-    Try<int> fd = open(
-        path,
-        O_RDWR | O_CREAT,
-        S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
-    if (fd.isError()) {
-      return Error("Failed to open file: " + fd.error());
-    }
-
-    return close(fd.get());
-  }
-
-  // Update the access and modification times.
-  return utime(path);
-}
-
-
-inline Try<Nothing> rm(const std::string& path)
-{
-  if (::remove(path.c_str()) != 0) {
-    return ErrnoError();
-  }
-
-  return Nothing();
-}
-
-
-// Creates a temporary directory using the specified path
-// template. The template may be any path with _6_ `Xs' appended to
-// it, for example /tmp/temp.XXXXXX. The trailing `Xs' are replaced
-// with a unique alphanumeric combination.
-inline Try<std::string> mkdtemp(const std::string& path = "/tmp/XXXXXX")
-{
-  char* temp = new char[path.size() + 1];
-  if (::mkdtemp(::strcpy(temp, path.c_str())) != NULL) {
-    std::string result(temp);
-    delete[] temp;
-    return result;
-  } else {
-    delete[] temp;
-    return ErrnoError();
-  }
-}
-
-
-// By default, recursively deletes a directory akin to: 'rm -r'. If the
-// programmer sets recursive to false, it deletes a directory akin to: 'rmdir'.
-// Note that this function expects an absolute path.
-#ifndef __sun // FTS is not available on Solaris.
-inline Try<Nothing> rmdir(const std::string& directory, bool recursive = true)
-{
-  if (!recursive) {
-    if (::rmdir(directory.c_str()) < 0) {
-      return ErrnoError();
-    }
-  } else {
-    char* paths[] = {const_cast<char*>(directory.c_str()), NULL};
-
-    FTS* tree = fts_open(paths, FTS_NOCHDIR, NULL);
-    if (tree == NULL) {
-      return ErrnoError();
-    }
-
-    FTSENT* node;
-    while ((node = fts_read(tree)) != NULL) {
-      switch (node->fts_info) {
-        case FTS_DP:
-          if (::rmdir(node->fts_path) < 0 && errno != ENOENT) {
-            return ErrnoError();
-          }
-          break;
-        case FTS_F:
-        case FTS_SL:
-          if (::unlink(node->fts_path) < 0 && errno != ENOENT) {
-            return ErrnoError();
-          }
-          break;
-        default:
-          break;
-      }
-    }
-
-    if (errno != 0) {
-      return ErrnoError();
-    }
-
-    if (fts_close(tree) < 0) {
-      return ErrnoError();
-    }
-  }
-
-  return Nothing();
-}
-#endif // __sun
 
 
 // Executes a command by calling "/bin/sh -c <command>", and returns
@@ -281,13 +145,13 @@ inline int system(const std::string& command)
 // async signal safe.
 inline int execvpe(const char* file, char** argv, char** envp)
 {
-  char** saved = os::environ();
+  char** saved = os::raw::environment();
 
-  *os::environp() = envp;
+  *os::raw::environmentp() = envp;
 
   int result = execvp(file, argv);
 
-  *os::environp() = saved;
+  *os::raw::environmentp() = saved;
 
   return result;
 }
@@ -340,16 +204,6 @@ inline Try<Nothing> chown(
 inline Try<Nothing> chmod(const std::string& path, int mode)
 {
   if (::chmod(path.c_str(), mode) < 0) {
-    return ErrnoError();
-  }
-
-  return Nothing();
-}
-
-
-inline Try<Nothing> chdir(const std::string& directory)
-{
-  if (::chdir(directory.c_str()) < 0) {
     return ErrnoError();
   }
 
@@ -518,30 +372,6 @@ inline Try<Nothing> su(const std::string& user)
   }
 
   return Nothing();
-}
-
-
-inline std::string getcwd()
-{
-  size_t size = 100;
-
-  while (true) {
-    char* temp = new char[size];
-    if (::getcwd(temp, size) == temp) {
-      std::string result(temp);
-      delete[] temp;
-      return result;
-    } else {
-      if (errno != ERANGE) {
-        delete[] temp;
-        return std::string();
-      }
-      size *= 2;
-      delete[] temp;
-    }
-  }
-
-  return std::string();
 }
 
 

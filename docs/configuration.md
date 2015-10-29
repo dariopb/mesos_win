@@ -1022,7 +1022,7 @@ file:///path/to/file (where file contains one of the above)</code></pre>
   </tr>
   <tr>
     <td>
-      --docker_sock=VALUE
+      --docker_socket=VALUE
     </td>
     <td>
       The UNIX socket path to be mounted into the docker executor container to
@@ -1389,15 +1389,6 @@ file:///path/to/file (where file contains one of the above)</code></pre>
   </tr>
   <tr>
     <td>
-      --resource_monitoring_interval=VALUE
-    </td>
-    <td>
-      Periodic time interval for monitoring executor
-      resource usage (e.g., 10secs, 1min, etc) (default: 1secs)
-    </td>
-  </tr>
-  <tr>
-    <td>
       --resources=VALUE
     </td>
     <td>
@@ -1447,9 +1438,13 @@ file:///path/to/file (where file contains one of the above)</code></pre>
       --[no-]switch_user
     </td>
     <td>
-      Whether to run tasks as the user who
-      submitted them rather than the user running
-      the slave (requires setuid permission) (default: true)
+      If set to `true`, the agent will attempt to run tasks as
+      the `user` who launched them (as defined in `FrameworkInfo`)
+      (this requires `setuid` permission and that the given `user`
+      exists on the agent).
+      If the user does not exist, an error occurs and the task will fail.
+      If set to `false`, tasks will be run as the same user as the Mesos
+      agent process.  (default: true)
     </td>
   </tr>
   <tr>

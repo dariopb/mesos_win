@@ -245,6 +245,17 @@ map<string, string> executorEnvironment(
 {
   map<string, string> environment;
 
+  // In cases where DNS is not available on the slave, the absence of
+  // LIBPROCESS_IP in the executor's environment will cause an error when the
+  // new executor process attempts a hostname lookup. Thus, we pass the slave's
+  // LIBPROCESS_IP through here, even if the executor environment is specified
+  // explicitly. Note that a LIBPROCESS_IP present in the provided flags will
+  // override this value.
+  Option<string> libprocessIP = os::getenv("LIBPROCESS_IP");
+  if (libprocessIP.isSome()) {
+    environment["LIBPROCESS_IP"] = libprocessIP.get();
+  }
+
   if (flags.executor_environment_variables.isSome()) {
     foreachpair (const string& key,
                  const JSON::Value& value,
@@ -267,7 +278,7 @@ map<string, string> executorEnvironment(
   // case the framework wants to override).
   // TODO(tillt): Adapt library towards JNI specific name once libmesos
   // has been split.
-  if (os::getenv("MESOS_NATIVE_JAVA_LIBRARY").isNone()) {
+  if (environment.count("MESOS_NATIVE_JAVA_LIBRARY") == 0) {
     string path =
 #ifdef __APPLE__
       LIBDIR "/libmesos-" VERSION ".dylib";
@@ -282,7 +293,7 @@ map<string, string> executorEnvironment(
   // Also add MESOS_NATIVE_LIBRARY if it's not already present.
   // This environment variable is kept for offering non JVM-based
   // frameworks a more compact and JNI independent library.
-  if (os::getenv("MESOS_NATIVE_LIBRARY").isNone()) {
+  if (environment.count("MESOS_NATIVE_LIBRARY") == 0) {
     string path =
 #ifdef __APPLE__
       LIBDIR "/libmesos-" VERSION ".dylib";

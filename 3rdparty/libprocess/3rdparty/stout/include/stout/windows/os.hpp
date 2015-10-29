@@ -33,22 +33,10 @@
 #include <stout/try.hpp>
 #include <stout/windows.hpp>
 
+#include <stout/os/raw/environment.hpp>
+
 
 namespace os {
-
-inline char** environ()
-{
-  // Defined in stdlib.h.
-  return ::_environ;
-}
-
-
-// Returns the address of os::environ().
-inline char*** environp()
-{
-  return &::_environ;
-}
-
 
 // Sets the value associated with the specified key in the set of
 // environment variables.
@@ -63,37 +51,6 @@ inline void setenv(const std::string& key,
 // Unsets the value associated with the specified key in the set of
 // environment variables.
 inline void unsetenv(const std::string& key)
-{
-  UNIMPLEMENTED;
-}
-
-
-inline Try<Nothing> touch(const std::string& path)
-{
-  UNIMPLEMENTED;
-}
-
-
-inline Try<Nothing> rm(const std::string& path)
-{
-  UNIMPLEMENTED;
-}
-
-
-// Creates a temporary directory using the specified path
-// template. The template may be any path with _6_ `Xs' appended to
-// it, for example /tmp/temp.XXXXXX. The trailing `Xs' are replaced
-// with a unique alphanumeric combination.
-inline Try<std::string> mkdtemp(const std::string& path = "/tmp/XXXXXX")
-{
-  UNIMPLEMENTED;
-}
-
-
-// By default, recursively deletes a directory akin to: 'rm -r'. If the
-// programmer sets recursive to false, it deletes a directory akin to: 'rmdir'.
-// Note that this function expects an absolute path.
-inline Try<Nothing> rmdir(const std::string& directory, bool recursive = true)
 {
   UNIMPLEMENTED;
 }
@@ -150,12 +107,6 @@ inline Try<Nothing> chmod(const std::string& path, int mode)
 }
 
 
-inline Try<Nothing> chdir(const std::string& directory)
-{
-  UNIMPLEMENTED;
-}
-
-
 inline Try<Nothing> chroot(const std::string& directory)
 {
   UNIMPLEMENTED;
@@ -184,12 +135,6 @@ inline Result<gid_t> getgid(const Option<std::string>& user = None())
 
 
 inline Try<Nothing> su(const std::string& user)
-{
-  UNIMPLEMENTED;
-}
-
-
-inline std::string getcwd()
 {
   UNIMPLEMENTED;
 }

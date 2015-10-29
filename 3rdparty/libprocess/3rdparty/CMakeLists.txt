@@ -122,7 +122,7 @@ elseif (WIN32)
   set(LIBAPR_INSTALL_CMD ${CMAKE_NOOP})
 endif (NOT WIN32)
 
-set(RY_UPDATE_CMD ${CMAKE_COMMAND} -E copy ${PROCESS_3RD_SRC}/http-parser/CMakeLists.txt ${HTTP_PARSER_ROOT})
+set(RY_UPDATE_CMD ${CMAKE_COMMAND} -E copy ${PROCESS_3RD_SRC}/http-parser/CMakeLists.txt.template ${HTTP_PARSER_ROOT}/CMakeLists.txt)
 
 # Third-party libraries. Tell the build system how to pull in and build third-
 # party libraries at compile time, using the ExternalProject_Add macro.
