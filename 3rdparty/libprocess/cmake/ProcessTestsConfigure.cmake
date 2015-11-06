@@ -76,6 +76,7 @@ set(PROCESS_TEST_DEPENDENCIES
   ${PROCESS_TEST_DEPENDENCIES}
   ${PROCESS_DEPENDENCIES}
   ${GMOCK_TARGET}
+  ${GZIP_TARGET}
   )
 
 # DEFINE THIRD-PARTY INCLUDE DIRECTORIES. Tells compiler toolchain where to get
@@ -90,6 +91,13 @@ set(PROCESS_TEST_INCLUDE_DIRS
   src
   )
 
+if (WIN32)
+  set(PROCESS_TEST_INCLUDE_DIRS
+    ${PROCESS_TEST_INCLUDE_DIRS}
+    ${ZLIB_INCLUDE_DIR}
+  )
+endif (WIN32)
+
 # DEFINE THIRD-PARTY LIB INSTALL DIRECTORIES. Used to tell the compiler
 # toolchain where to find our third party libs (e.g., -L/path/to/glog on
 # Linux).
@@ -100,6 +108,13 @@ set(PROCESS_TEST_LIB_DIRS
   ${GMOCK_LIB_DIR}
   ${GTEST_LIB_DIR}
   )
+
+if (WIN32)
+  set(PROCESS_TEST_LIBS
+    ${PROCESS_TEST_LIBS}
+    ${ZLIB_LIB_DIR}
+  )
+endif (WIN32)
 
 # DEFINE THIRD-PARTY LIBS. Used to generate flags that the linker uses to
 # include our third-party libs (e.g., -lglog on Linux).
