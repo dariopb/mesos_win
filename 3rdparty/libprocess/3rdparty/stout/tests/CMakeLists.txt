@@ -43,6 +43,8 @@ set(STOUT_TESTS_SRC
   strings_tests.cpp
   uuid_tests.cpp
   version_tests.cpp
+  gzip_tests.cpp
+
   )
 
 if (NOT WIN32)
@@ -50,7 +52,6 @@ if (NOT WIN32)
     ${STOUT_TESTS_SRC}
     dynamiclibrary_tests.cpp
     flags_tests.cpp
-    gzip_tests.cpp
     mac_tests.cpp
     os_tests.cpp
     path_tests.cpp
