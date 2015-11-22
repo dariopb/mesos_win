@@ -44,12 +44,12 @@ set(STOUT_TESTS_SRC
   uuid_tests.cpp
   version_tests.cpp
   gzip_tests.cpp
+  dynamiclibrary_tests.cpp
   )
 
 if (NOT WIN32)
   set(STOUT_TESTS_SRC
     ${STOUT_TESTS_SRC}
-    dynamiclibrary_tests.cpp
     flags_tests.cpp
     mac_tests.cpp
     os_tests.cpp
